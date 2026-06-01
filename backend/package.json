@@ -1,0 +1,35 @@
+{
+	"dependencies": {
+		"@apollo/server": "^5.5.1",
+		"@as-integrations/express5": "^1.1.2",
+		"@prisma/adapter-better-sqlite3": "^7.8.0",
+		"@prisma/client": "^7.8.0",
+		"bcryptjs": "^3.0.3",
+		"class-validator": "^0.15.1",
+		"cors": "^2.8.6",
+		"express": "^5.2.1",
+		"jsonwebtoken": "^9.0.3",
+		"reflect-metadata": "^0.2.2",
+		"type-graphql": "^2.0.0-rc.3",
+		"ultracite": "7.8.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.15",
+		"@types/bun": "latest",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/jsonwebtoken": "^9.0.10",
+		"dotenv": "^17.2.3",
+		"prisma": "^7.2.0",
+		"typescript": "^5"
+	},
+	"name": "backend",
+	"scripts": {
+		"dev": "bun --watch src/index.ts",
+		"check": "ultracite check",
+		"fix": "ultracite fix"
+	},
+	"type": "module",
+	"module": "index.ts",
+	"private": true
+}

@@ -1,0 +1,26 @@
+{
+	"root": false,
+	"extends": ["ultracite/biome/core"],
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		}
+	},
+	"linter": {
+		"rules": {
+			"complexity": {
+				"noStaticOnlyClass": "off",
+				"noUselessConstructor": "off"
+			},
+			"style": {
+				"noEnum": "off",
+				"noParameterProperties": "off",
+				"useReadonlyClassProperties": "off"
+			},
+			"suspicious": {
+				"useAwait": "off"
+			}
+		}
+	}
+}
