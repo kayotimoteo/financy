@@ -14,15 +14,43 @@ import type {
 	TransactionType,
 } from "../models/transaction.model";
 
+function resolveCategoryId(categoryId?: string) {
+	const id = categoryId?.trim();
+	return id || undefined;
+}
+
 export class TransactionService {
+	private async assertCategoryBelongsToUser(
+		categoryId: string,
+		userId: string,
+	) {
+		const category = await prismaClient.category.findFirst({
+			where: { id: categoryId, userId },
+		});
+
+		if (!category) {
+			throw new Error("Category not found");
+		}
+	}
+
 	async create(
 		data: CreateTransactionInput,
 		userId: string,
 	): Promise<TransactionModel> {
+		const categoryId = resolveCategoryId(data.categoryId);
+
+		if (categoryId) {
+			await this.assertCategoryBelongsToUser(categoryId, userId);
+		}
+
 		const transaction = await prismaClient.transaction.create({
 			data: {
-				...data,
+				description: data.description,
+				amount: data.amount,
+				type: data.type,
+				date: data.date,
 				userId,
+				...(categoryId ? { categoryId } : {}),
 			},
 		});
 
@@ -41,9 +69,26 @@ export class TransactionService {
 			throw new Error("Transaction not found");
 		}
 
+		const categoryId =
+			data.categoryId !== undefined
+				? resolveCategoryId(data.categoryId)
+				: undefined;
+
+		if (categoryId) {
+			await this.assertCategoryBelongsToUser(categoryId, transaction.userId);
+		}
+
+		const { categoryId: _categoryId, ...rest } = data;
+
 		const updatedTransaction = await prismaClient.transaction.update({
 			where: { id },
-			data: { ...data, updatedAt: new Date() },
+			data: {
+				...rest,
+				...(data.categoryId !== undefined
+					? { categoryId: categoryId ?? null }
+					: {}),
+				updatedAt: new Date(),
+			},
 		});
 
 		return {
