@@ -2,21 +2,21 @@ import { Field, GraphQLISODateTime, ID, ObjectType } from "type-graphql";
 
 @ObjectType({ description: "User model" })
 export class UserModel {
-	@Field(() => ID)
-	id!: string;
+  @Field(() => ID)
+  id!: string;
 
-	@Field(() => String)
-	name!: string;
+  @Field(() => String)
+  name!: string;
 
-	@Field(() => String)
-	email!: string;
+  @Field(() => String)
+  email!: string;
 
-	@Field(() => String)
-	password!: string;
+  @Field(() => String)
+  password!: string;
 
-	@Field(() => GraphQLISODateTime)
-	createdAt!: Date;
+  @Field(() => GraphQLISODateTime)
+  createdAt!: Date;
 
-	@Field(() => GraphQLISODateTime)
-	updatedAt!: Date;
+  @Field(() => GraphQLISODateTime)
+  updatedAt!: Date;
 }

@@ -12,35 +12,41 @@ import { TransactionResolver } from "@/resolvers/transaction.resolver";
 import { UserResolver } from "@/resolvers/user.resolver";
 
 async function main() {
-	const app = express();
+  const app = express();
+  const corsOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
 
-	const schema = await buildSchema({
-		resolvers: [
-			AuthResolver,
-			CategoryResolver,
-			TransactionResolver,
-			UserResolver,
-		],
-		validate: true,
-		emitSchemaFile: "./schema.graphql",
-	});
+  const schema = await buildSchema({
+    resolvers: [
+      AuthResolver,
+      CategoryResolver,
+      TransactionResolver,
+      UserResolver,
+    ],
+    validate: true,
+    emitSchemaFile: "./schema.graphql",
+  });
 
-	const server = new ApolloServer({ schema });
+  const server = new ApolloServer({ schema });
 
-	await server.start();
+  await server.start();
 
-	app.use(
-		"/graphql",
-		cors({ origin: "http://localhost:5173" }),
-		express.json(),
-		expressMiddleware(server, {
-			context: buildContext,
-		}),
-	);
+  app.use(
+    "/graphql",
+    cors({
+      origin: corsOrigin,
+      credentials: true,
+      methods: ["GET", "POST", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
+    express.json(),
+    expressMiddleware(server, {
+      context: buildContext,
+    })
+  );
 
-	app.listen({ port: 4000 }, () => {
-		console.log("🚀 Server ready at: http://localhost:4000");
-	});
+  app.listen({ port: 4000 }, () => {
+    console.log("Server ready at: http://localhost:4000");
+  });
 }
 
 main();

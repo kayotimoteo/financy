@@ -1,4 +1,4 @@
-# Financy — Frontend
+# Financy - Frontend
 
 SPA em React + Vite com Apollo Client, React Router e Tailwind CSS v4.
 
@@ -9,7 +9,11 @@ bun install
 cp .env.example .env
 ```
 
-Defina `VITE_BACKEND_URL` no `.env` (ex.: `http://localhost:4000/graphql`).
+Defina `VITE_BACKEND_URL` no `.env`:
+
+```env
+VITE_BACKEND_URL=http://localhost:4000/graphql
+```
 
 ## Desenvolvimento
 
@@ -18,6 +22,12 @@ bun run dev
 ```
 
 Aplicação em `http://localhost:5173`.
+
+## Rotas principais
+
+- `/` redireciona para `/login` quando o usuário está deslogado e para `/dashboard` quando está autenticado.
+- `/login` e `/signup` são rotas públicas.
+- `/dashboard`, `/transactions`, `/categories` e `/account` são rotas protegidas.
 
 ## Produção
 

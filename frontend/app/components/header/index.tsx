@@ -1,9 +1,21 @@
 import Logo from "@/assets/logo.svg";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
 import { useAuthStore } from "@/store/auth/auth";
 import { getUserLetters } from "@/utils/userLetters";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 
+const navItems = [
+  { label: "Dashboard", path: "/dashboard" },
+  { label: "Transações", path: "/transactions" },
+  { label: "Categorias", path: "/categories" },
+] as const;
+
+export const getActivePageClass = (pathname: string, targetPath: string) =>
+  pathname === targetPath ? "font-semibold" : "text-gray-600 font-normal";
+
+/**
+ * Main authenticated navigation with current-page highlighting and account access.
+ */
 export const Header = () => {
   const userName = useAuthStore((state) => state.user?.name);
 
@@ -14,18 +26,11 @@ export const Header = () => {
     navigate("/account");
   };
 
-  const isDashboardPage = pathname === "/";
-  const isTransactionsPage = pathname === "/transactions";
-  const isCategoriesPage = pathname === "/categories";
-
-  const unselectedPageClassName = "text-gray-600 font-normal";
-  const selectedPageClassName = "font-semibold";
-
   const userLetters = getUserLetters(userName);
 
   return (
     <div className="w-full sticky top-0 left-0 z-1 flex flex-row items-center justify-between bg-white py-4 px-12 border-b border-gray-200">
-      <Link to="/">
+      <Link to="/dashboard">
         <img
           src={Logo}
           alt="Texto 'Financy' com dois desenhos no lado esquerdo do escrito representando moedas"
@@ -34,40 +39,16 @@ export const Header = () => {
       </Link>
 
       <div className="flex flex-row gap-5">
-        <Link to="/">
-          <Button
-            variant="link"
-            className={
-              isDashboardPage ? selectedPageClassName : unselectedPageClassName
-            }
-          >
-            Dashboard
-          </Button>
-        </Link>
-
-        <Link to="/transactions">
-          <Button
-            variant="link"
-            className={
-              isTransactionsPage
-                ? selectedPageClassName
-                : unselectedPageClassName
-            }
-          >
-            Transações
-          </Button>
-        </Link>
-
-        <Link to="/categories">
-          <Button
-            variant="link"
-            className={
-              isCategoriesPage ? selectedPageClassName : unselectedPageClassName
-            }
-          >
-            Categorias
-          </Button>
-        </Link>
+        {navItems.map((item) => (
+          <Link key={item.path} to={item.path}>
+            <Button
+              variant="link"
+              className={getActivePageClass(pathname, item.path)}
+            >
+              {item.label}
+            </Button>
+          </Link>
+        ))}
       </div>
 
       <Button

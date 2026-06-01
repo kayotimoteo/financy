@@ -17,6 +17,4 @@ export type CategoryInput = CategoryFormData & {
   color: string;
 };
 
-export type CategoryOutput = {
-  createCategory: Category;
-};
+export type CategoryOutput = Category;

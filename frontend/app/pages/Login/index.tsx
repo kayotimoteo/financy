@@ -18,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Eye, EyeClosed, Lock, Mail, UserRoundPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { LoginFormData } from "./types";
@@ -42,6 +42,7 @@ export const Login = () => {
   });
 
   const login = useAuthStore((state) => state.login);
+  const navigate = useNavigate();
 
   const handleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -59,6 +60,7 @@ export const Login = () => {
 
       if (isSuccess) {
         toast.success("Login realizado com sucesso!");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       toast.error("Erro ao realizar o login!");

@@ -60,7 +60,7 @@ export const Signup = () => {
       if (isSuccess) {
         toast.success("Cadastro realizado com sucesso!");
 
-        navigate("/");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       toast.error("Erro ao realizar o cadastro!");
@@ -189,7 +189,7 @@ export const Signup = () => {
                 className="w-full"
                 asChild
               >
-                <Link to="/">
+                <Link to="/login">
                   <LogIn />
                   Fazer login
                 </Link>

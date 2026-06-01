@@ -1,23 +1,18 @@
 import {
-  BaggageClaim,
-  BookOpen,
-  BriefcaseBusiness,
-  CarFront,
-  Dumbbell,
-  Gift,
-  HeartPulse,
-  House,
-  Loader,
-  Mailbox,
-  PawPrint,
-  PiggyBank,
-  ReceiptText,
-  ShoppingCart,
-  Ticket,
-  ToolCase,
-  Utensils,
-  X,
-} from "lucide-react";
+  defaultCategoryColor,
+  defaultCategoryIcon,
+} from "@/constants/category-options";
+import {
+  CREATE_CATEGORY,
+  UPDATE_CATEGORY,
+} from "@/lib/graphql/mutations/Category";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@apollo/client/react";
+import { Loader, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { Button } from "../ui/button";
 import {
   DialogClose,
@@ -32,36 +27,31 @@ import {
   InputGroupInput,
 } from "../ui/input-group";
 import { Label } from "../ui/label";
-import { useForm } from "react-hook-form";
+import { ColorSelector } from "./ColorSelector";
+import { IconSelector } from "./IconSelector";
 import type {
   CategoryFormData,
   CategoryInput,
   CategoryOutput,
   NewCategoryProps,
 } from "./types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useEffect, useState } from "react";
-import {
-  CREATE_CATEGORY,
-  UPDATE_CATEGORY,
-} from "@/lib/graphql/mutations/Category";
-import { toast } from "sonner";
-import { useMutation } from "@apollo/client/react";
 
 const categorySchema = z.object({
   title: z.string().min(1, "O título é obrigatório"),
   description: z.string().optional(),
 });
 
+/**
+ * Dialog content used to create or edit a category with form validation.
+ */
 export const CreateEditCategory = ({
   isOpen,
   onOpenChange,
   refetchCategories,
   category,
 }: NewCategoryProps) => {
-  const [color, setColor] = useState("green");
-  const [icon, setIcon] = useState("BriefcaseBusiness");
+  const [color, setColor] = useState(defaultCategoryColor);
+  const [icon, setIcon] = useState(defaultCategoryIcon);
 
   const {
     register,
@@ -75,8 +65,14 @@ export const CreateEditCategory = ({
 
   const resetFields = () => {
     reset();
-    setColor("green");
-    setIcon("BriefcaseBusiness");
+    setColor(defaultCategoryColor);
+    setIcon(defaultCategoryIcon);
+  };
+
+  const closeDialog = () => {
+    resetFields();
+    onOpenChange(false);
+    refetchCategories?.();
   };
 
   const [createCategory, { loading: loadingCreate }] = useMutation<
@@ -86,17 +82,13 @@ export const CreateEditCategory = ({
     refetchQueries: ["SummaryCategory"],
     onCompleted: () => {
       toast.success("Categoria criada com sucesso!");
-      resetFields();
-      onOpenChange(false);
-      refetchCategories?.();
+      closeDialog();
     },
     onError: (error) => {
-      const err = error.message;
-
       toast.error(
         <>
           <p>Erro ao criar categoria!</p>
-          {err && <p>Error: {err}</p>}
+          {error.message && <p>Error: {error.message}</p>}
         </>,
       );
     },
@@ -109,71 +101,46 @@ export const CreateEditCategory = ({
     refetchQueries: ["SummaryCategory"],
     onCompleted: () => {
       toast.success("Categoria atualizada com sucesso!");
-      resetFields();
-      onOpenChange(false);
-      refetchCategories?.();
+      closeDialog();
     },
     onError: (error) => {
-      const err = error.message;
-
       toast.error(
         <>
           <p>Erro ao atualizar a categoria!</p>
-          {err && <p>Error: {err}</p>}
+          {error.message && <p>Error: {error.message}</p>}
         </>,
       );
     },
   });
 
-  const handleColor = (option: string) => {
-    setColor(option);
-  };
-
-  const handleIcon = (option: string) => {
-    setIcon(option);
-  };
-
   const onSubmit = async (formData: CategoryFormData) => {
+    const data = {
+      ...formData,
+      icon,
+      color,
+    };
+
     if (category) {
-      updateCategory({
-        variables: {
-          data: {
-            ...formData,
-            icon,
-            color,
-          },
-          id: category.id,
-        },
-      });
-    } else {
-      createCategory({
-        variables: {
-          data: {
-            ...formData,
-            icon,
-            color,
-          },
-        },
-      });
+      updateCategory({ variables: { data, id: category.id } });
+      return;
     }
+
+    createCategory({ variables: { data } });
   };
 
   useEffect(() => {
     if (!isOpen) {
       resetFields();
-    } else {
-      if (category) {
-        setValue("title", category.title);
-        setValue("description", category.description);
-        setColor(category.color);
-        setIcon(category.icon);
-      }
+      return;
     }
-  }, [isOpen, category]);
 
-  const selectedIconClassName =
-    "border-brand-base [&_svg]:text-gray-600 bg-gray-100";
-  const selectedColorClassName = "border-brand-base bg-gray-100";
+    if (category) {
+      setValue("title", category.title);
+      setValue("description", category.description);
+      setColor(category.color);
+      setIcon(category.icon);
+    }
+  }, [isOpen, category, setValue]);
 
   const loading = loadingCreate || loadingUpdate;
 
@@ -227,224 +194,8 @@ export const CreateEditCategory = ({
           <span className="text-xs text-gray-500">Opcional</span>
         </InputGroupControl>
 
-        <div className="flex flex-col gap-2">
-          <Label className="font-medium">Ícone</Label>
-
-          <div className="flex flex-row flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("BriefcaseBusiness")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "BriefcaseBusiness" && selectedIconClassName}`}
-            >
-              <BriefcaseBusiness />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("CarFront")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "CarFront" && selectedIconClassName}`}
-            >
-              <CarFront />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("HeartPulse")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "HeartPulse" && selectedIconClassName}`}
-            >
-              <HeartPulse />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("PiggyBank")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "PiggyBank" && selectedIconClassName}`}
-            >
-              <PiggyBank />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("ShoppingCart")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "ShoppingCart" && selectedIconClassName}`}
-            >
-              <ShoppingCart />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("Ticket")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "Ticket" && selectedIconClassName}`}
-            >
-              <Ticket />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("ToolCase")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "ToolCase" && selectedIconClassName}`}
-            >
-              <ToolCase />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("Utensils")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "Utensils" && selectedIconClassName}`}
-            >
-              <Utensils />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("PawPrint")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "PawPrint" && selectedIconClassName}`}
-            >
-              <PawPrint />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("House")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "House" && selectedIconClassName}`}
-            >
-              <House />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("Gift")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "Gift" && selectedIconClassName}`}
-            >
-              <Gift />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("Dumbbell")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "Dumbbell" && selectedIconClassName}`}
-            >
-              <Dumbbell />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("BookOpen")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "BookOpen" && selectedIconClassName}`}
-            >
-              <BookOpen />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("BaggageClaim")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "BaggageClaim" && selectedIconClassName}`}
-            >
-              <BaggageClaim />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("Mailbox")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "Mailbox" && selectedIconClassName}`}
-            >
-              <Mailbox />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleIcon("ReceiptText")}
-              className={`w-10.5 h-10.5 p-0! [&_svg]:w-5! [&_svg]:h-5! [&_svg]:text-gray-500 ${icon === "ReceiptText" && selectedIconClassName}`}
-            >
-              <ReceiptText />
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label className="font-medium">Cor</Label>
-
-          <div className="flex flex-row flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("green")}
-              className={`p-1! ${color === "green" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-green-base" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("blue")}
-              className={`p-1! ${color === "blue" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-blue-base" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("purple")}
-              className={`p-1! ${color === "purple" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-purple-base" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("pink")}
-              className={`p-1! ${color === "pink" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-pink-base" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("red")}
-              className={`p-1! ${color === "red" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-red-base" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("orange")}
-              className={`p-1! ${color === "orange" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-orange-base" />
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleColor("yellow")}
-              className={`p-1! ${color === "yellow" && selectedColorClassName}`}
-            >
-              <div className="w-10 h-5 rounded-sm bg-yellow-base" />
-            </Button>
-          </div>
-        </div>
+        <IconSelector value={icon} onChange={setIcon} />
+        <ColorSelector value={color} onChange={setColor} />
 
         <Button variant="default" disabled={loading} className="mt-2">
           Salvar
